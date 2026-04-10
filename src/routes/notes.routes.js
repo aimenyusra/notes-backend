@@ -1,12 +1,16 @@
 import express, { request } from 'express';
 import Note from '../model/notes.model.js';
+import auth from '../middleware/auth.js';
+
 const router = express.Router();
 export default router;
+
+
 // Create a new note
-router.post('/', async (req, res) => {
-  const { title, content, userId } = req.body;
+router.post('/', auth, async (req, res) => {
+  const { title, content} = req.body;
   try {
-    const note = new Note({ title, content, user: userId });
+    const note = new Note({ title, content, user: req.user.id });
     await note.save();
     res.status(201).json(note);
   } catch (error) {
@@ -15,7 +19,7 @@ router.post('/', async (req, res) => {
 });
 
 // Get all notes
-router.get('/', async (req, res) => {
+router.get('/', auth, async (req, res) => {
   try {
     const notes = await Note.find().populate('user', 'name');
     res.json(notes);
@@ -25,7 +29,7 @@ router.get('/', async (req, res) => {
 });
 
 // Get a single note
-router.get('/:id', async (req, res) => {
+router.get('/:id', auth, async (req, res) => {
   try {
     const note = await Note.findById(req.params.id).populate('user', 'name');
     if (!note) {
@@ -37,7 +41,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 // Update a note
-router.put('/:id', async (req, res) => {
+router.put('/:id', auth, async (req, res) => {
   const { title, content } = req.body;
   console.log(req.body);
   try {    
@@ -65,7 +69,7 @@ router.put('/:id', async (req, res) => {
 
 
 // Delete a note
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', auth, async (req, res) => {
   try {
     const note = await Note.findByIdAndDelete(req.params.id);
     if (!note) {
@@ -78,7 +82,7 @@ router.delete('/:id', async (req, res) => {
 });
 
 // delete all notes
-router.delete('/', async (req, res) => {
+router.delete('/', auth,  async (req, res) => {
   try {
     await Note.deleteMany();
     res.json({ message: 'All notes deleted' });
