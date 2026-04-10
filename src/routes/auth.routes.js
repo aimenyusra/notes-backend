@@ -1,9 +1,15 @@
 import express from "express";
 import bcrypt from "bcrypt";
 import User from "../model/user.model.js";
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+dotenv.config();
+
+
 
 const router = express.Router();
 export default router;
+
 // Register route
 router.post("/register", async (req, res) => {
   const { name, email, password } = req.body;
@@ -36,22 +42,33 @@ router.post("/register", async (req, res) => {
 });
 
 router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
 
+  const { email, password } = req.body;
   try {
     // Find the user by email
     const user = await User.findOne({ email });
+    console.log("User found:", user);
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
     // Check if the password is correct
     const isMatch = await bcrypt.compare(password, user.password);
+    console.log("Password match:", isMatch);
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    res.status(200).json({ message: "Login successful" });
+
+    const token = jwt.sign(
+      { id: user._id },
+      "secretkey",
+      );
+    res.json({
+      message: "Login successful",
+      token});
+
+
   } catch (error) {
     console.error("Error during login:", error);
     res.status(500).json({ message: "Internal server error" });
